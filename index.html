@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Will you be my Valentine? 💕</title>
+
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg1: #c00452;
+      --bg2: #ffeef6;
+      --card: #ffffffcc;
+      --yes: #ff3b7a;
+      --yesHover: #ff1f68;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow-x: hidden;
+      padding: 16px;
+    }
+
+    /* Floating hearts background */
+    .floating-hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .heart {
+      position: absolute;
+      font-size: 20px;
+      animation: float 6s ease-in-out infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* FULL-SCREEN CONFETTI CANVAS */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: min(720px, 92vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 26px 22px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border-radius: 22px;
+      text-align: center;
+      box-shadow: 0 18px 60px rgba(0,0,0,.15);
+    }
+
+    .art {
+      width: min(220px, 70vw);
+      margin: 0 auto 10px;
+      display: block;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-size: clamp(24px, 4vw, 42px);
+      margin: 12px 0 18px;
+      background: linear-gradient(135deg, #ff3b7a, #ff1f68, #c00452);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .button-zone {
+      position: relative;
+      width: min(520px, 92%);
+      height: 150px;
+      margin: 0 auto;
+      touch-action: none;
+    }
+
+    button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.14);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+
+    #yesBtn {
+      left: 18%;
+      background: linear-gradient(135deg, var(--yes), var(--yesHover));
+      color: #fff;
+    }
+    #yesBtn:hover { 
+      background: linear-gradient(135deg, var(--yesHover), #e0145a);
+      box-shadow: 0 14px 30px rgba(255, 59, 122, 0.4);
+    }
+
+    #noBtn {
+      left: 62%;
+      background: #e5e7eb;
+      color: #111827;
+      transition: all 0.15s ease;
+    }
+
+    #noBtn:hover {
+      background: #d1d5db;
+    }
+
+    .hint {
+      margin-top: 10px;
+      font-size: 14px;
+      opacity: .8;
+      font-style: italic;
+    }
+
+    /* YES RESULT - Happy ending */
+    .result-yes {
+      display: none;
+      margin-top: 18px;
+      animation: pop .35s ease;
+    }
+
+    .result-yes h2 {
+      font-size: clamp(32px, 5vw, 52px);
+      margin: 10px 0;
+      background: linear-gradient(135deg, #ff6b9d, #ff3b7a, #ff1f68);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .result-yes p {
+      font-size: 18px;
+      color: #666;
+      margin: 10px 0 20px;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .photo-grid img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.15);
+      transition: transform 0.3s ease;
+    }
+
+    .photo-grid img:hover {
+      transform: scale(1.05) rotate(2deg);
+    }
+
+    /* NO RESULT - Funny consequence */
+    .result-no {
+      display: none;
+      margin-top: 18px;
+      animation: shake .5s ease;
+    }
+
+    .result-no h2 {
+      font-size: clamp(26px, 4vw, 40px);
+      margin: 10px 0;
+      color: #666;
+    }
+
+    .result-no p {
+      font-size: 16px;
+      color: #888;
+      margin: 10px 0 20px;
+    }
+
+    .bad-photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+      filter: grayscale(30%);
+    }
+
+    .bad-photo-grid img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.2);
+      border: 3px dashed #ccc;
+    }
+
+    .retry-btn {
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+      margin-top: 20px;
+      background: linear-gradient(135deg, var(--yes), var(--yesHover)) !important;
+      color: #fff !important;
+    }
+
+    @keyframes pop {
+      from { transform: scale(.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-10px); }
+      80% { transform: translateX(10px); }
+    }
+
+    .love-message {
+      background: linear-gradient(135deg, #fff5f8, #ffe0eb);
+      padding: 15px 20px;
+      border-radius: 15px;
+      margin: 15px 0;
+      font-size: 16px;
+      color: #c00452;
+      border-left: 4px solid #ff3b7a;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Floating hearts background -->
+  <div class="floating-hearts" id="floatingHearts"></div>
+
+  <canvas id="confettiCanvas"></canvas>
+
+  <main class="card">
+    <!-- CUTE TEDDY BEAR WITH HEART -->
+    <svg class="art" viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#c9a07a"/>
+          <stop offset="1" stop-color="#a67c52"/>
+        </linearGradient>
+        <linearGradient id="furLight" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#e8d4b8"/>
+          <stop offset="1" stop-color="#d4bc9a"/>
+        </linearGradient>
+        <linearGradient id="heart" x1="0" x2="1">
+          <stop offset="0" stop-color="#ff4d7d"/>
+          <stop offset="1" stop-color="#ff1f68"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Bear ears -->
+      <circle cx="100" cy="70" r="35" fill="url(#fur)"/>
+      <circle cx="100" cy="70" r="20" fill="url(#furLight)"/>
+      <circle cx="220" cy="70" r="35" fill="url(#fur)"/>
+      <circle cx="220" cy="70" r="20" fill="url(#furLight)"/>
+
+      <!-- Bear head -->
+      <ellipse cx="160" cy="120" rx="85" ry="75" fill="url(#fur)"/>
+
+      <!-- Bear body -->
+      <ellipse cx="160" cy="220" rx="70" ry="55" fill="url(#fur)"/>
+
+      <!-- Tummy -->
+      <ellipse cx="160" cy="225" rx="45" ry="35" fill="url(#furLight)"/>
+
+      <!-- Arms holding heart -->
+      <ellipse cx="85" cy="200" rx="25" ry="40" fill="url(#fur)" transform="rotate(-20 85 200)"/>
+      <ellipse cx="235" cy="200" rx="25" ry="40" fill="url(#fur)" transform="rotate(20 235 200)"/>
+
+      <!-- Beating heart the bear is holding -->
+      <g style="animation: heartbeat 1s ease-in-out infinite; transform-origin: 160px 195px;">
+        <path d="M160 175 
+                 C160 160 140 150 125 165
+                 C110 180 110 200 160 230
+                 C210 200 210 180 195 165
+                 C180 150 160 160 160 175Z"
+              fill="url(#heart)"/>
+        <!-- Heart shine -->
+        <ellipse cx="140" cy="175" rx="8" ry="5" fill="#fff" opacity="0.4" transform="rotate(-30 140 175)"/>
+      </g>
+
+      <!-- Snout -->
+      <ellipse cx="160" cy="140" rx="35" ry="28" fill="url(#furLight)"/>
+
+      <!-- Eyes -->
+      <ellipse cx="125" cy="105" rx="12" ry="14" fill="#333"/>
+      <ellipse cx="195" cy="105" rx="12" ry="14" fill="#333"/>
+      <!-- Eye sparkles -->
+      <circle cx="129" cy="100" r="5" fill="#fff"/>
+      <circle cx="199" cy="100" r="5" fill="#fff"/>
+      <circle cx="122" cy="108" r="2" fill="#fff"/>
+      <circle cx="192" cy="108" r="2" fill="#fff"/>
+
+      <!-- Cute blush -->
+      <ellipse cx="95" cy="130" rx="15" ry="8" fill="#ffb6c1" opacity="0.6"/>
+      <ellipse cx="225" cy="130" rx="15" ry="8" fill="#ffb6c1" opacity="0.6"/>
+
+      <!-- Nose -->
+      <ellipse cx="160" cy="135" rx="12" ry="9" fill="#4a3728"/>
+      <ellipse cx="158" cy="133" rx="4" ry="3" fill="#fff" opacity="0.3"/>
+
+      <!-- Mouth -->
+      <path d="M150 148 Q160 158 170 148" stroke="#4a3728" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+      <!-- Feet -->
+      <ellipse cx="120" cy="268" rx="28" ry="15" fill="url(#fur)"/>
+      <ellipse cx="200" cy="268" rx="28" ry="15" fill="url(#fur)"/>
+      <ellipse cx="120" cy="268" rx="18" ry="10" fill="url(#furLight)"/>
+      <ellipse cx="200" cy="268" rx="18" ry="10" fill="url(#furLight)"/>
+    </svg>
+
+    <h1>💕 Sonam, will you be my Valentine? 💕</h1>
+
+    <section class="button-zone" id="zone">
+      <button id="yesBtn">Yes! 💖</button>
+      <button id="noBtn">No 😢</button>
+    </section>
+
+    <!-- HINT -->
+    <div class="hint" id="hint">Psst... It's not easy to say "No" to me 😈</div>
+
+    <!-- ===== YES RESULT ===== -->
+    <section class="result-yes" id="resultYes">
+      <h2>YAYYYYY! 🎉💕</h2>
+      <p>I knew you'd say yes! You just made me the happiest person! 🥰</p>
+      
+      <div class="love-message">
+        💌 I promise to love you, annoy you, make you laugh, and be your forever Valentine! 💌
+      </div>
+
+      <!-- ========================================== -->
+      <!-- ADD YOUR CUTE COUPLE PHOTOS HERE          -->
+      <!-- Put your images in the same folder and    -->
+      <!-- change src to "photo1.jpg", "photo2.jpg"  -->
+      <!-- ========================================== -->
+      <div class="photo-grid">
+        <img src="./images/cute/20251012_101045.jpg" alt="Our cute moment 1" />
+        <img src="./images/cute/20260110_131128(1)(1).jpg" alt="Our cute moment 2" />
+        <img src="./images/cute/DSC_9362.JPG" alt="Our cute moment 3" />
+        <img src="./images/cute/Screenshot_20260202_190049_Gallery.jpg" alt="Our cute moment 4" />
+      </div>
+
+      <img
+        style="width: min(300px, 80vw); margin-top: 20px; border-radius: 15px;"
+        src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
+        alt="Celebration"
+      />
+    </section>
+
+    <!-- ===== NO RESULT ===== -->
+    <section class="result-no" id="resultNo">
+      <h2>Really?! 😭💔</h2>
+      <p>This is what happens when you say no... Look at yourself! 😜</p>
+      
+      <!-- ========================================== -->
+      <!-- ADD HER FUNNY/BAD PHOTOS HERE             -->
+      <!-- Put funny images and change src to        -->
+      <!-- "bad1.jpg", "bad2.jpg" etc.               -->
+      <!-- ========================================== -->
+      <div class="bad-photo-grid">
+        <img src="./images/bad/20251212_221109.jpg" alt="Funny moment 1" />
+        <img src="./images/bad/Screenshot_20260201_140031_WhatsApp.jpg" alt="Funny moment 2" />
+        <img src="./images/bad/Screenshot_20260202_181610_Gallery.jpg" alt="Funny moment 3" />
+        <img src="./images/bad/Screenshot_20260202_181810_Gallery.jpg" alt="Funny moment 4" />
+        <img src="./images/bad/Screenshot_20260202_181857_Snapchat.jpg" alt="Funny moment 5" />
+      </div>
+
+      <div class="love-message" style="background: linear-gradient(135deg, #f0f0f0, #e0e0e0); color: #666;">
+        😢 Your sad life if you say no... Is this what you want?! 😢
+      </div>
+
+      <button class="retry-btn" id="retryBtn">Okay fine, YES! 💕</button>
+    </section>
+  </main>
+
+  <script>
+    const zone = document.getElementById("zone");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const resultYes = document.getElementById("resultYes");
+    const resultNo = document.getElementById("resultNo");
+    const hint = document.getElementById("hint");
+    const retryBtn = document.getElementById("retryBtn");
+
+    /* ---------- FLOATING HEARTS ---------- */
+    const heartsContainer = document.getElementById("floatingHearts");
+    const heartEmojis = ['💕', '💖', '💗', '💓', '💝', '❤️', '🩷'];
+    
+    function createFloatingHeart() {
+      const heart = document.createElement('span');
+      heart.className = 'heart';
+      heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = (4 + Math.random() * 4) + 's';
+      heart.style.animationDelay = Math.random() * 2 + 's';
+      heart.style.fontSize = (16 + Math.random() * 20) + 'px';
+      heartsContainer.appendChild(heart);
+      
+      setTimeout(() => heart.remove(), 10000);
+    }
+    
+    // Create initial hearts
+    for (let i = 0; i < 15; i++) {
+      setTimeout(createFloatingHeart, i * 300);
+    }
+    // Keep creating hearts
+    setInterval(createFloatingHeart, 800);
+
+    /* ---------- CONFETTI ---------- */
+    const confettiCanvas = document.getElementById("confettiCanvas");
+
+    function resizeConfettiCanvas() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(window.innerWidth * dpr);
+      confettiCanvas.height = Math.floor(window.innerHeight * dpr);
+      confettiCanvas.style.width = "100vw";
+      confettiCanvas.style.height = "100vh";
+    }
+
+    resizeConfettiCanvas();
+    window.addEventListener("resize", resizeConfettiCanvas);
+    window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 150));
+
+    const confettiInstance = confetti.create(confettiCanvas, {
+      resize: false,
+      useWorker: true
+    });
+
+    function fullScreenConfetti() {
+      const end = Date.now() + 3000;
+
+      (function frame() {
+        confettiInstance({
+          particleCount: 15,
+          spread: 100,
+          startVelocity: 50,
+          ticks: 200,
+          colors: ['#ff3b7a', '#ff1f68', '#ff69b4', '#ffb6c1', '#fff', '#ffd700'],
+          origin: { x: Math.random(), y: Math.random() * 0.3 }
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+
+      setTimeout(() => {
+        confettiInstance({
+          particleCount: 400,
+          spread: 160,
+          startVelocity: 70,
+          ticks: 250,
+          colors: ['#ff3b7a', '#ff1f68', '#ff69b4', '#ffb6c1', '#fff', '#ffd700'],
+          origin: { x: 0.5, y: 0.5 }
+        });
+      }, 400);
+
+      // Extra heart-shaped burst
+      setTimeout(() => {
+        confettiInstance({
+          particleCount: 100,
+          spread: 80,
+          origin: { x: 0.3, y: 0.6 },
+          colors: ['#ff3b7a', '#ff1f68']
+        });
+        confettiInstance({
+          particleCount: 100,
+          spread: 80,
+          origin: { x: 0.7, y: 0.6 },
+          colors: ['#ff3b7a', '#ff1f68']
+        });
+      }, 800);
+    }
+
+    /* ---------- YES BUTTON GROWS ---------- */
+    let yesScale = 1;
+    function growYes() {
+      yesScale = Math.min(2.2, yesScale + 0.12);
+      yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+    }
+
+    /* ---------- NO BUTTON RUNS AWAY (EXTREMELY HARD TO CLICK!) ---------- */
+    let noClickCount = 0;
+    const maxNoClicks = 40; // Need MANY attempts before allowing No
+    let lastMoveTime = 0;
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    // Teleport to random position
+    function teleportNo() {
+      const z = zone.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      
+      const newLeft = Math.random() * (z.width - b.width);
+      const newTop = Math.random() * (z.height - b.height);
+      
+      noBtn.style.left = newLeft + "px";
+      noBtn.style.top = newTop + "px";
+      noBtn.style.transform = "none";
+    }
+
+    // Constant jittering to make targeting harder
+    let jitterInterval;
+    function startJitter() {
+      if (jitterInterval) return;
+      jitterInterval = setInterval(() => {
+        if (noClickCount < maxNoClicks) {
+          const currentLeft = parseFloat(noBtn.style.left) || 0;
+          const currentTop = parseFloat(noBtn.style.top) || 0;
+          const jitterX = (Math.random() - 0.5) * 8;
+          const jitterY = (Math.random() - 0.5) * 8;
+          noBtn.style.left = (currentLeft + jitterX) + "px";
+          noBtn.style.top = (currentTop + jitterY) + "px";
+        }
+      }, 50);
+    }
+    startJitter();
+
+    function moveNo(px, py) {
+      const now = Date.now();
+      if (now - lastMoveTime < 30) return; // Very responsive
+      lastMoveTime = now;
+
+      const z = zone.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+
+      // High chance to teleport randomly for extra frustration!
+      if (Math.random() < 0.45) {
+        teleportNo();
+        noClickCount++;
+        growYes();
+        return;
+      }
+
+      let dx = (b.left + b.width / 2) - px;
+      let dy = (b.top + b.height / 2) - py;
+      let mag = Math.hypot(dx, dy) || 1;
+      dx /= mag;
+      dy /= mag;
+
+      // VERY random and unpredictable movement
+      dx += (Math.random() - 0.5) * 2;
+      dy += (Math.random() - 0.5) * 2;
+
+      // Move SUPER far away
+      let newLeft = (b.left - z.left) + dx * 350;
+      let newTop  = (b.top - z.top) + dy * 350;
+
+      newLeft = clamp(newLeft, 0, z.width - b.width);
+      newTop  = clamp(newTop, 0, z.height - b.height);
+
+      noBtn.style.left = newLeft + "px";
+      noBtn.style.top = newTop + "px";
+      noBtn.style.transform = "none";
+
+      noClickCount++;
+      growYes();
+      
+      // Update hint based on attempts
+      if (noClickCount >= 3 && noClickCount < 10) {
+        hint.textContent = "Ha! You think you can catch me? 😏";
+      } else if (noClickCount >= 10 && noClickCount < 20) {
+        hint.textContent = "I'm too fast for you! Just say YES! 💕";
+      } else if (noClickCount >= 20 && noClickCount < 30) {
+        hint.textContent = "You're really trying hard to break my heart 💔";
+      } else if (noClickCount >= 30 && noClickCount < 40) {
+        hint.textContent = "Almost there... are you SURE? 😢";
+      } else if (noClickCount >= 40) {
+        hint.textContent = "Fine... if you REALLY want to say no... 😭";
+      }
+
+      // Make button shrink as they keep trying
+      if (noClickCount > 5) {
+        const shrink = Math.max(0.5, 1 - (noClickCount - 5) * 0.02);
+        noBtn.style.fontSize = (18 * shrink) + "px";
+        noBtn.style.padding = (16 * shrink) + "px " + (28 * shrink) + "px";
+      }
+    }
+
+    // Track mouse/touch constantly - HUGE detection radius
+    document.addEventListener("pointermove", e => {
+      if (noClickCount < maxNoClicks) {
+        const b = noBtn.getBoundingClientRect();
+        const d = Math.hypot(
+          (b.left + b.width / 2) - e.clientX,
+          (b.top + b.height / 2) - e.clientY
+        );
+        // MASSIVE detection radius - runs away from very far!
+        if (d < 280) moveNo(e.clientX, e.clientY);
+      }
+    });
+
+    // Also move on hover
+    noBtn.addEventListener("pointerenter", (e) => {
+      if (noClickCount < maxNoClicks) {
+        moveNo(e.clientX, e.clientY);
+      }
+    });
+
+    // Move away even on touch start (mobile)
+    noBtn.addEventListener("touchstart", (e) => {
+      if (noClickCount < maxNoClicks) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        moveNo(touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
+
+    /* ---------- NO CLICK (if they manage to) ---------- */
+    noBtn.addEventListener("click", (e) => {
+      if (noClickCount < maxNoClicks) {
+        e.preventDefault();
+        moveNo(e.clientX, e.clientY);
+      } else {
+        // They persisted! Show the funny/sad result
+        zone.style.display = "none";
+        hint.style.display = "none";
+        resultNo.style.display = "block";
+      }
+    });
+
+    /* ---------- YES CLICK ---------- */
+    yesBtn.addEventListener("click", () => {
+      zone.style.display = "none";
+      hint.style.display = "none";
+      resultYes.style.display = "block";
+      resizeConfettiCanvas();
+      fullScreenConfetti();
+    });
+
+    /* ---------- RETRY BUTTON (from No result) ---------- */
+    retryBtn.addEventListener("click", () => {
+      resultNo.style.display = "none";
+      resultYes.style.display = "block";
+      resizeConfettiCanvas();
+      fullScreenConfetti();
+    });
+  </script>
+</body>
+</html>
+
+
